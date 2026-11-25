@@ -76,7 +76,7 @@ Yes, tested up to WooCommerce 11.3 and supports HPOS (High-Performance Order Sto
 Needs Docker, Node 24, PHP and Composer.
 
 ```bash
-npm ci && composer install
+npm ci && npx lefthook install && composer install
 npm run env:start   # http://localhost:8888, admin / password
 npm test
 npm run plugin-check
