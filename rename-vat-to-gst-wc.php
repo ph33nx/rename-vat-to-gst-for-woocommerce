@@ -3,7 +3,7 @@
  * Plugin Name:       Rename VAT and Tax to GST for WooCommerce
  * Plugin URI:        https://wordpress.org/plugins/rename-vat-to-gst-for-woocommerce/
  * Description:       WooCommerce GST plugin: change VAT and Tax to GST on the cart, checkout, orders and emails, block and classic. No setup.
- * Version:           2.0.0
+ * Version:           2.1.0
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            abhi9
