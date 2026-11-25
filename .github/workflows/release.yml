@@ -1,5 +1,5 @@
 name: Release
-# Manual only, because an SVN commit publishes at once and cannot be undone:
+# Manual only, because an SVN commit cannot be undone:
 #   gh workflow run release.yml -f version_bump=patch|minor|major
 on:
     workflow_dispatch:

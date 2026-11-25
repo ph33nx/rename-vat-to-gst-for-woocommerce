@@ -15,12 +15,14 @@
 		"format:check": "prettier --check .",
 		"zip": "bin/build-zip.sh",
 		"plugin-check": "bin/plugin-check.sh",
-		"check:tested-up-to": "node bin/check-tested-up-to.mjs"
+		"check:tested-up-to": "node bin/check-tested-up-to.mjs",
+		"render:assets": "node bin/render-assets.mjs"
 	},
 	"devDependencies": {
 		"@wordpress/env": "11.17.0",
 		"@wordpress/prettier-config": "5.2.0",
 		"@wordpress/scripts": "37.2.0",
+		"playwright-core": "1.65.1",
 		"prettier": "npm:wp-prettier@3.0.3"
 	},
 	"version": "2.1.0"

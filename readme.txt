@@ -71,6 +71,11 @@ Yes. It renames VAT and Tax after translation, so any language that uses those w
 = Does this work with the latest WooCommerce? =
 Yes, tested up to WooCommerce 11.3 and supports HPOS (High-Performance Order Storage).
 
+== Screenshots ==
+
+1. GST on the block cart
+2. GST on the block checkout
+
 == Changelog ==
 
 = 2.1.0 =
