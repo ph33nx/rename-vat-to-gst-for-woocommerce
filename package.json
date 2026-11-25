@@ -1,0 +1,28 @@
+{
+	"name": "rename-vat-to-gst-for-woocommerce",
+	"private": true,
+	"license": "GPL-2.0-or-later",
+	"scripts": {
+		"env:start": "NODE_OPTIONS='--dns-result-order=ipv4first --no-network-family-autoselection' wp-env start",
+		"env:stop": "wp-env stop",
+		"test": "wp-env run tests-cli --env-cwd=wp-content/plugins/rename-vat-to-gst-for-woocommerce vendor/bin/phpunit",
+		"test:bin": "node --test 'bin/*.test.mjs'",
+		"lint:js": "wp-scripts lint-js bin",
+		"lint:php": "vendor/bin/phpcs",
+		"lint:compile": "bin/lint-compile.sh",
+		"stan": "vendor/bin/phpstan analyze --no-progress --memory-limit=1G",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"zip": "bin/build-zip.sh",
+		"plugin-check": "bin/plugin-check.sh",
+		"check:tested-up-to": "node bin/check-tested-up-to.mjs"
+	},
+	"devDependencies": {
+		"@wordpress/env": "11.17.0",
+		"@wordpress/prettier-config": "5.2.0",
+		"@wordpress/scripts": "37.2.0",
+		"lefthook": "2.2.3",
+		"prettier": "npm:wp-prettier@3.0.3"
+	},
+	"version": "2.0.0"
+}

@@ -1,0 +1,33 @@
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 5
+      groups:
+          dev-dependencies:
+              dependency-type: development
+      # @wordpress/env is CI-critical: pin it exact (package.json) for local/CI
+      # parity and only auto-track patches, so a minor or major bump is vetted by
+      # a human against a green gate rather than rolled in silently with the
+      # dev-dependencies group.
+      ignore:
+          - dependency-name: '@wordpress/env'
+            update-types:
+                - version-update:semver-minor
+                - version-update:semver-major
+
+    - package-ecosystem: composer
+      directory: /
+      schedule:
+          interval: weekly
+      open-pull-requests-limit: 5
+      groups:
+          dev-dependencies:
+              dependency-type: development
+
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly

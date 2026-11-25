@@ -1,0 +1,6 @@
+parameters:
+	level: 8
+	paths:
+		- rename-vat-to-gst-wc.php
+	scanFiles:
+		- vendor/php-stubs/wordpress-stubs/wordpress-stubs.php

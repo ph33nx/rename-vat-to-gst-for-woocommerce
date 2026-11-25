@@ -1,0 +1,41 @@
+pre-commit:
+    parallel: true
+    commands:
+        php-format:
+            glob: '*.php'
+            run: vendor/bin/phpcbf {staged_files} || true
+            stage_fixed: true
+        php-lint:
+            glob: '*.php'
+            run: vendor/bin/phpcs {staged_files}
+        phpstan:
+            glob: '*.php'
+            run: npm run -s stan
+        format:
+            glob: '*.{js,mjs,cjs,json,md,yml}'
+            run: npx prettier --write --ignore-unknown --no-error-on-unmatched-pattern {staged_files}
+            stage_fixed: true
+
+pre-push:
+    commands:
+        php-lint:
+            run: npm run -s lint:php
+        compile-lint:
+            run: npm run -s lint:compile
+        phpstan:
+            run: npm run -s stan
+        format-check:
+            run: npm run -s format:check
+        js-lint:
+            run: npm run -s lint:js
+        bin-tests:
+            run: npm run -s test:bin
+        # The two below need wp-env: npm run env:start
+        phpunit:
+            env:
+                NODE_OPTIONS: --dns-result-order=ipv4first --no-network-family-autoselection
+            run: npm test
+        plugin-check:
+            env:
+                NODE_OPTIONS: --dns-result-order=ipv4first --no-network-family-autoselection
+            run: npm run -s plugin-check

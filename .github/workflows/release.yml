@@ -1,0 +1,93 @@
+name: Release
+# Manual only, because an SVN commit publishes at once and cannot be undone:
+#   gh workflow run release.yml -f version_bump=patch|minor|major
+on:
+    workflow_dispatch:
+        inputs:
+            version_bump:
+                description: 'patch | minor | major'
+                required: false
+                default: 'patch'
+
+env:
+    NODE_OPTIONS: --dns-result-order=ipv4first --no-network-family-autoselection
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: The SVN login is set
+              env:
+                  SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+                  SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+              run: '[ -n "$SVN_USERNAME" ] && [ -n "$SVN_PASSWORD" ]'
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  tools: composer
+                  coverage: none
+            - run: composer install --prefer-dist --no-progress
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+                  cache: 'npm'
+            - run: npm ci
+            - run: npm run lint:php
+            - run: npm run lint:compile
+            - run: npm run stan
+            - run: npm run format:check
+            - run: npm run lint:js
+            - run: npm run test:bin
+            - run: npm run check:tested-up-to
+            - run: bin/env-start.sh
+            - run: npm test
+            - run: npm run plugin-check
+
+            - name: Bump version
+              id: bump
+              run: |
+                  npm version "${{ inputs.version_bump }}" --no-git-tag-version
+                  VERSION=$(node -p "require('./package.json').version")
+                  ENTRIES=$(grep -c "^= $VERSION =\$" readme.txt || true)
+                  if [ "$ENTRIES" -lt 2 ]; then
+                    echo "::error::readme.txt needs a '= $VERSION =' entry under == Changelog == and == Upgrade Notice ==."
+                    exit 1
+                  fi
+                  sed -i "s/^\( \* Version: *\).*/\1$VERSION/" rename-vat-to-gst-wc.php
+                  sed -i "s/^Stable tag:.*/Stable tag: $VERSION/" readme.txt
+                  grep -q "^ \* Version: *$VERSION\$" rename-vat-to-gst-wc.php
+                  grep -q "^Stable tag: $VERSION\$" readme.txt
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+            - name: Commit, tag, push
+              run: |
+                  git config user.name "github-actions[bot]"
+                  git config user.email "github-actions[bot]@users.noreply.github.com"
+                  VERSION="${{ steps.bump.outputs.version }}"
+                  git add .
+                  git commit -m "release: v$VERSION"
+                  git tag "v$VERSION"
+                  git push --atomic origin HEAD "refs/tags/v$VERSION"
+
+            - name: Deploy to WordPress.org
+              id: deploy
+              uses: 10up/action-wordpress-plugin-deploy@stable
+              with:
+                  generate-zip: true
+              env:
+                  SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+                  SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+                  SLUG: rename-vat-to-gst-for-woocommerce
+                  VERSION: ${{ steps.bump.outputs.version }}
+
+            - name: Attach zip to GitHub release
+              uses: softprops/action-gh-release@v3
+              with:
+                  tag_name: v${{ steps.bump.outputs.version }}
+                  files: ${{ steps.deploy.outputs.zip-path }}
+                  generate_release_notes: true

@@ -1,0 +1,8 @@
+/node_modules
+/vendor
+/CLAUDE.md
+/docs
+/build
+.phpunit.result.cache
+.wp-env.override.json
+*.zip

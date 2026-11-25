@@ -1,0 +1,101 @@
+name: CI
+on:
+    push:
+        branches: [main]
+    pull_request:
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    NODE_OPTIONS: --dns-result-order=ipv4first --no-network-family-autoselection
+
+jobs:
+    lint:
+        name: Lint and Plugin Check
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  tools: composer
+                  coverage: none
+            - run: composer install --prefer-dist --no-progress
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+                  cache: 'npm'
+            - run: npm ci
+            - run: npm run lint:php
+            - run: npm run lint:compile
+            - run: npm run stan
+            - run: npm run format:check
+            - run: npm run lint:js
+            - run: npm run test:bin
+            - run: bin/env-start.sh
+            - run: npm run plugin-check
+
+    test:
+        name: PHPUnit (${{ matrix.name }})
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: 'PHP 7.4, WP 6.7'
+                      php: '7.4'
+                      core: 'https://wordpress.org/wordpress-6.7.zip'
+                      plugin: 'woocommerce.9.8.5'
+                    - name: 'PHP 8.3, latest WP'
+                      php: '8.3'
+                      core: ''
+                      plugin: 'woocommerce'
+                    - name: 'PHP 8.6, WP trunk'
+                      php: '8.6'
+                      core: 'https://wordpress.org/nightly-builds/wordpress-latest.zip'
+                      plugin: 'woocommerce'
+        env:
+            WP_ENV_PHP_VERSION: ${{ matrix.php }}
+            WP_ENV_CORE: ${{ matrix.core }}
+        steps:
+            - uses: actions/checkout@v7
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  tools: composer
+                  coverage: none
+            - run: composer install --prefer-dist --no-progress
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: '24'
+                  cache: 'npm'
+            - run: npm ci
+            - name: Set the woocommerce version
+              run: |
+                  jq '.plugins = ["https://downloads.wordpress.org/plugin/${{ matrix.plugin }}.zip", "."]' .wp-env.json > .wp-env.override.json
+            - run: |
+                  [ -n "$WP_ENV_CORE" ] || unset WP_ENV_CORE
+                  bin/env-start.sh
+                  npm test
+            - name: Shipped PHP compiles without a notice on this PHP
+              run: |
+                  [ -n "$WP_ENV_CORE" ] || unset WP_ENV_CORE
+                  npx wp-env run tests-cli --env-cwd=wp-content/plugins/rename-vat-to-gst-for-woocommerce bin/lint-compile.sh
+
+    ci-success:
+        name: CI success
+        if: always()
+        needs: [lint, test]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Require all gating jobs to pass
+              run: |
+                  results="${{ needs.lint.result }} ${{ needs.test.result }}"
+                  echo "$results"
+                  [ "$results" = "success success" ]
